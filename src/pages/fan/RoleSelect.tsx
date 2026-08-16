@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import katseraLogo from "@/imports/katsera_logo.png"
 
 function StarShape({ size = 40, color = "white", style }: { size?: number; color?: string; style?: React.CSSProperties }) {
   return (
@@ -12,7 +13,7 @@ export default function RoleSelect() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-[#E8E8E8] relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[#E8E8E8] relative overflow-hidden flex flex-col font-[Nunito]">
       {/* Diagonal blue panel — covers top-left area */}
       <div
         className="absolute inset-0"
@@ -43,9 +44,15 @@ export default function RoleSelect() {
       </div>
 
       {/* Heading */}
-      <div className="relative z-10 flex-1 flex flex-col justify-between px-8 pt-16 pb-10 max-w-md mx-auto w-full">
+      <div className="relative z-10 flex-1 flex flex-col justify-between px-8 pt-12 pb-10 max-w-md mx-auto w-full">
         <div>
-          <h1 className="text-white text-5xl font-extrabold leading-tight mt-4 max-w-xs">
+          {/* Katsera Logo Header */}
+          <div className="flex items-center gap-3 mb-6 bg-white/10 backdrop-blur-md p-3 rounded-2xl w-fit border border-white/20 shadow-md">
+            <img src={katseraLogo} alt="Katsera Logo" className="w-10 h-10 object-contain" />
+            <span className="text-white font-extrabold text-xl tracking-wide">Katsera</span>
+          </div>
+
+          <h1 className="text-white text-4xl sm:text-5xl font-extrabold leading-tight mt-2 max-w-xs">
             Who are you signing up as?
           </h1>
         </div>

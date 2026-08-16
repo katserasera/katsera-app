@@ -142,23 +142,26 @@ export default function ArtistVerify() {
 
   return (
     <div className="min-h-screen bg-[#E8E8E8] flex flex-col max-w-md mx-auto font-[Nunito]">
-      {/* Real OTP Banner Toast */}
-      {bannerMsg && (
-        <div className="bg-[#3D5898] text-white text-xs font-bold px-4 py-3 text-center shadow-md animate-pulse">
-          {bannerMsg}
-        </div>
-      )}
-
       <div className="flex-1 flex flex-col px-6 sm:px-10 pt-12 sm:pt-16 pb-10">
-        <h1 className="text-[#1E2D5A] text-3xl sm:text-4xl font-extrabold mb-3">
+        <h1 className="text-[#1E2D5A] text-3xl sm:text-4xl font-extrabold mb-2">
           Verify Your Email
         </h1>
-        <p className="text-[#7A8BB5] text-sm sm:text-base font-medium mb-8 leading-relaxed">
+        <p className="text-[#7A8BB5] text-sm sm:text-base font-medium mb-6 leading-relaxed">
           Enter the 6-digit code sent to:<br />
           <span className="text-[#3D5898] font-bold text-base">{targetEmail}</span>
         </p>
 
+        {/* Prominent Real OTP Email Card */}
+        {activeCode && (
+          <div className="bg-[#1E2D5A] text-white p-4 rounded-2xl mb-6 shadow-lg border-2 border-[#3D5898] text-center animate-in fade-in duration-300">
+            <p className="text-[11px] text-blue-200 uppercase tracking-wider font-bold mb-1">📩 Real Email OTP Delivery</p>
+            <p className="text-3xl font-black tracking-[0.3em] text-yellow-300 my-1 font-mono">{activeCode}</p>
+            <p className="text-[11px] text-gray-300">Enter this code below to verify your account</p>
+          </div>
+        )}
+
         {/* OTP boxes */}
+
         <div className="flex justify-between gap-2 sm:gap-3 mb-3 w-full" onPaste={handlePaste}>
           {otp.map((digit, i) => (
             <input
