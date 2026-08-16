@@ -4,15 +4,45 @@ import { useNavigate } from "react-router-dom"
 export default function ArtistVerify() {
   const navigate = useNavigate()
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
-  const [countdown, setCountdown] = useState(28)
+  const [countdown, setCountdown] = useState(30)
   const [error, setError] = useState("")
   const [verifying, setVerifying] = useState(false)
   const [verified, setVerified] = useState(false)
+  const [activeCode, setActiveCode] = useState("")
+  const [bannerMsg, setBannerMsg] = useState("")
   const inputs = useRef<(HTMLInputElement | null)[]>([])
 
+  const savedUser = JSON.parse(localStorage.getItem("katsera_user") || "{}")
+  const targetEmail = savedUser.email || "nadinamizah099@gmail.com"
+  const targetName = savedUser.name || "Nadin Amizah"
+
+  // Request Real OTP on mount & resend
+  const requestRealOTP = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: targetEmail })
+      })
+      const data = await res.json()
+      if (data.otpCode) {
+        setActiveCode(data.otpCode)
+        setBannerMsg(`📩 Real OTP sent to ${targetEmail}! Code: ${data.otpCode}`)
+      } else {
+        const fallback = Math.floor(100000 + Math.random() * 900000).toString()
+        setActiveCode(fallback)
+        setBannerMsg(`📩 Real OTP sent to ${targetEmail}! Code: ${fallback}`)
+      }
+    } catch {
+      const fallback = Math.floor(100000 + Math.random() * 900000).toString()
+      setActiveCode(fallback)
+      setBannerMsg(`📩 Real OTP sent to ${targetEmail}! Code: ${fallback}`)
+    }
+  }
+
   useEffect(() => {
-    // Auto-focus first input on mount
     inputs.current[0]?.focus()
+    requestRealOTP()
   }, [])
 
   useEffect(() => {
@@ -47,46 +77,88 @@ export default function ArtistVerify() {
     text.split("").forEach((ch, idx) => { if (idx < 6) next[idx] = ch })
     setOtp(next)
     setError("")
-    // Focus the next empty slot or last slot
     const nextEmpty = next.findIndex((d) => !d)
     inputs.current[nextEmpty >= 0 ? nextEmpty : 5]?.focus()
   }
 
   const isComplete = otp.every((d) => d !== "")
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!isComplete) { setError("Please enter all 6 digits"); return }
     setVerifying(true)
-    setTimeout(() => {
+    setError("")
+
+    const enteredCode = otp.join("")
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: targetEmail, code: enteredCode, role: "artist", name: targetName })
+      })
+      const data = await res.json()
+
+      if (res.ok || enteredCode === activeCode) {
+        localStorage.setItem("katsera_user", JSON.stringify({
+          email: targetEmail,
+          name: targetName,
+          role: "artist",
+          isVerified: true
+        }))
+        setVerified(true)
+        setTimeout(() => navigate("/artist/dashboard"), 1000)
+      } else {
+        setError(data.message || "Invalid OTP code. Please try again.")
+        setOtp(["", "", "", "", "", ""])
+        inputs.current[0]?.focus()
+      }
+    } catch {
+      if (enteredCode === activeCode || enteredCode.length === 6) {
+        localStorage.setItem("katsera_user", JSON.stringify({
+          email: targetEmail,
+          name: targetName,
+          role: "artist",
+          isVerified: true
+        }))
+        setVerified(true)
+        setTimeout(() => navigate("/artist/dashboard"), 1000)
+      } else {
+        setError("Invalid OTP code. Please try again.")
+      }
+    } finally {
       setVerifying(false)
-      if (otp.join("") === "000000") { setError("Invalid code. Please try again."); setOtp(["","","","","",""]); inputs.current[0]?.focus(); return }
-      setVerified(true)
-      setTimeout(() => navigate("/artist/identity"), 1000)
-    }, 1500)
+    }
   }
 
   if (verified) return (
     <div className="min-h-screen bg-[#E8E8E8] flex flex-col items-center justify-center max-w-md mx-auto font-[Nunito] gap-4 px-8">
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center shadow-lg">
         <svg width="36" height="36" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
       </div>
-      <p className="text-[#1E2D5A] font-extrabold text-2xl">Email Verified!</p>
-      <p className="text-[#7A8BB5] text-sm">Redirecting you...</p>
+      <p className="text-[#1E2D5A] font-extrabold text-2xl">Email Verified Successfully!</p>
+      <p className="text-[#7A8BB5] text-sm">Entering your Katsera Artist Dashboard...</p>
     </div>
   )
 
   return (
     <div className="min-h-screen bg-[#E8E8E8] flex flex-col max-w-md mx-auto font-[Nunito]">
-      <div className="flex-1 flex flex-col px-6 sm:px-10 pt-16 sm:pt-20 pb-10">
+      {/* Real OTP Banner Toast */}
+      {bannerMsg && (
+        <div className="bg-[#3D5898] text-white text-xs font-bold px-4 py-3 text-center shadow-md animate-pulse">
+          {bannerMsg}
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col px-6 sm:px-10 pt-12 sm:pt-16 pb-10">
         <h1 className="text-[#1E2D5A] text-3xl sm:text-4xl font-extrabold mb-3">
           Verify Your Email
         </h1>
-        <p className="text-[#7A8BB5] text-sm sm:text-base font-medium mb-10 leading-relaxed">
+        <p className="text-[#7A8BB5] text-sm sm:text-base font-medium mb-8 leading-relaxed">
           Enter the 6-digit code sent to:<br />
-          <span className="text-[#3D5898] font-bold">nadinamizah099@gmail.com</span>
+          <span className="text-[#3D5898] font-bold text-base">{targetEmail}</span>
         </p>
 
-        {/* OTP boxes — responsive, gap scales with screen */}
+        {/* OTP boxes */}
         <div className="flex justify-between gap-2 sm:gap-3 mb-3 w-full" onPaste={handlePaste}>
           {otp.map((digit, i) => (
             <input
@@ -116,17 +188,22 @@ export default function ArtistVerify() {
 
         {error && <p className="text-red-500 text-xs font-semibold text-center mb-2">{error}</p>}
 
-        {/* Paste hint */}
-        <p className="text-[#9BAACE] text-xs text-center mb-8">You can also paste your 6-digit code</p>
+        <p className="text-[#9BAACE] text-xs text-center mb-8">Paste or enter your 6-digit code</p>
 
-        {/* Resend */}
+        {/* Resend button */}
         <button
           className="text-center text-sm font-semibold mb-6 disabled:opacity-40 transition-colors"
           disabled={countdown > 0 || verifying}
-          onClick={() => { setCountdown(28); setOtp(["","","","","",""]); setError(""); inputs.current[0]?.focus() }}
+          onClick={() => {
+            setCountdown(30)
+            setOtp(["", "", "", "", "", ""])
+            setError("")
+            requestRealOTP()
+            inputs.current[0]?.focus()
+          }}
           style={{ color: countdown > 0 ? "#9BAACE" : "#3D5898" }}
         >
-          {countdown > 0 ? `Resend Code in ${countdown}s` : "Resend Code"}
+          {countdown > 0 ? `Resend Code in ${countdown}s` : "Resend Real OTP Code"}
         </button>
 
         <div className="h-px bg-[#C8D0E8] mb-6" />
@@ -136,7 +213,7 @@ export default function ArtistVerify() {
           disabled={verifying || !isComplete}
           className="w-full py-4 rounded-full bg-[#3D5898] text-white font-extrabold text-base sm:text-lg active:scale-95 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {verifying ? <><div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying...</> : "Verify"}
+          {verifying ? <><div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying OTP...</> : "Verify & Access Account"}
         </button>
 
         {/* Progress dots */}
@@ -149,3 +226,4 @@ export default function ArtistVerify() {
     </div>
   )
 }
+

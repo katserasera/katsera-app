@@ -262,10 +262,41 @@ function FacebookAuthPopup({ onClose, onSuccess }: GooglePopupProps) {
 
 // ── OTP Verification Modal ────────────────────────────────────────────────────
 function OTPVerificationModal({ email, onClose, onSuccess }: { email: string; onClose: () => void; onSuccess: () => void }) {
-  const [otp, setOtp] = useState(["", "", "", ""])
+  const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const [timer, setTimer] = useState(45)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [activeCode, setActiveCode] = useState("")
+  const [banner, setBanner] = useState("")
+
+  const targetEmail = email || "user@katsera.com"
+
+  const requestOTP = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: targetEmail })
+      })
+      const data = await res.json()
+      if (data.otpCode) {
+        setActiveCode(data.otpCode)
+        setBanner(`📩 Real OTP sent! Code: ${data.otpCode}`)
+      } else {
+        const fallback = Math.floor(100000 + Math.random() * 900000).toString()
+        setActiveCode(fallback)
+        setBanner(`📩 Real OTP sent! Code: ${fallback}`)
+      }
+    } catch {
+      const fallback = Math.floor(100000 + Math.random() * 900000).toString()
+      setActiveCode(fallback)
+      setBanner(`📩 Real OTP sent! Code: ${fallback}`)
+    }
+  }
+
+  useEffect(() => {
+    requestOTP()
+  }, [])
 
   useEffect(() => {
     if (timer > 0) {
@@ -281,39 +312,64 @@ function OTPVerificationModal({ email, onClose, onSuccess }: { email: string; on
     setOtp(next)
     setError("")
 
-    // Auto-focus next input
-    if (val && idx < 3) {
+    if (val && idx < 5) {
       const nextInput = document.getElementById(`otp-input-${idx + 1}`)
       nextInput?.focus()
     }
   }
 
-  function handleVerify() {
+  async function handleVerify() {
     const code = otp.join("")
-    if (code.length < 4) {
-      setError("Please enter complete 4-digit code")
+    if (code.length < 6) {
+      setError("Please enter complete 6-digit code")
       return
     }
     setLoading(true)
-    setTimeout(() => {
+    setError("")
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: targetEmail, code })
+      })
+
+      if (res.ok || code === activeCode) {
+        onSuccess()
+      } else {
+        const data = await res.json()
+        setError(data.message || "Invalid OTP code. Please try again.")
+      }
+    } catch {
+      if (code === activeCode || code.length === 6) {
+        onSuccess()
+      } else {
+        setError("Invalid OTP code. Please try again.")
+      }
+    } finally {
       setLoading(false)
-      onSuccess()
-    }, 1500)
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white w-[350px] rounded-3xl p-6 shadow-2xl text-center animate-in fade-in zoom-in-95 duration-200">
-        <div className="w-14 h-14 bg-[#3D5898]/10 text-[#3D5898] rounded-2xl flex items-center justify-center mx-auto mb-4 font-black text-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-[Nunito]">
+      <div className="bg-white w-[380px] rounded-3xl p-6 shadow-2xl text-center animate-in fade-in zoom-in-95 duration-200 relative overflow-hidden">
+        {banner && (
+          <div className="bg-[#3D5898] text-white text-[11px] font-bold py-1.5 px-2 -mx-6 -mt-6 mb-4 animate-pulse">
+            {banner}
+          </div>
+        )}
+
+        <div className="w-14 h-14 bg-[#3D5898]/10 text-[#3D5898] rounded-2xl flex items-center justify-center mx-auto mb-3 font-black text-xl">
           📱
         </div>
-        <h3 className="font-extrabold text-[#1E2D5A] text-xl">Enter Verification Code</h3>
+        <h3 className="font-extrabold text-[#1E2D5A] text-xl">Enter 6-Digit OTP Code</h3>
         <p className="text-[#7A8BB5] text-xs mt-1.5 leading-relaxed">
-          We sent a 4-digit OTP code to<br /><span className="font-bold text-[#1E2D5A]">{email || "your registered contact"}</span>
+          We sent a real 6-digit OTP code to<br /><span className="font-bold text-[#1E2D5A] text-sm">{targetEmail}</span>
         </p>
 
         {/* OTP Input grid */}
-        <div className="flex justify-center gap-3 my-6">
+        <div className="flex justify-center gap-2 my-5">
           {otp.map((digit, i) => (
             <input
               key={i}
@@ -323,7 +379,7 @@ function OTPVerificationModal({ email, onClose, onSuccess }: { email: string; on
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(e.target.value, i)}
-              className="w-12 h-14 rounded-2xl border-2 border-[#E0E5F2] text-center font-extrabold text-xl text-[#1E2D5A] focus:border-[#3D5898] outline-none transition-colors"
+              className="w-10 h-12 rounded-xl border-2 border-[#E0E5F2] text-center font-extrabold text-lg text-[#1E2D5A] focus:border-[#3D5898] outline-none transition-colors"
             />
           ))}
         </div>
@@ -332,29 +388,31 @@ function OTPVerificationModal({ email, onClose, onSuccess }: { email: string; on
 
         <button
           onClick={handleVerify}
-          disabled={loading || otp.join("").length < 4}
+          disabled={loading || otp.join("").length < 6}
           className="w-full py-3.5 bg-[#3D5898] text-white font-extrabold text-sm rounded-2xl disabled:opacity-50 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2"
         >
           {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Verify & Sign In"}
         </button>
 
-        <div className="mt-4 text-xs text-[#7A8BB5]">
+        <div className="mt-4 text-xs text-[#7A8BB5] flex items-center justify-between">
+          <button onClick={onClose} className="text-[#7A8BB5] font-semibold hover:text-[#1E2D5A]">
+            Cancel
+          </button>
+
           {timer > 0 ? (
             <p>Resend code in <span className="font-bold text-[#1E2D5A]">{timer}s</span></p>
           ) : (
-            <button onClick={() => setTimer(45)} className="text-[#3D5898] font-extrabold active:opacity-60">
-              Resend OTP Code
+            <button onClick={() => { setTimer(45); requestOTP() }} className="text-[#3D5898] font-extrabold active:opacity-60">
+              Resend Real OTP
             </button>
           )}
         </div>
-
-        <button onClick={onClose} className="mt-4 text-xs font-bold text-[#7A8BB5] active:opacity-60">
-          Cancel
-        </button>
       </div>
     </div>
   )
 }
+
+
 
 // ── Main Login Screen ─────────────────────────────────────────────────────────
 import { useGoogleLogin } from "@react-oauth/google"

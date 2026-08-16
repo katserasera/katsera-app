@@ -5,7 +5,9 @@ const router = express.Router();
 const {
     register,
     login,
-    socialLogin
+    socialLogin,
+    sendOTP,
+    verifyOTP
 } = require("../controllers/authController");
 
 
@@ -15,5 +17,10 @@ router.post("/login", login);
 
 router.post("/social-login", socialLogin);
 
+router.post("/send-otp", sendOTP);
 
-module.exports = router;
+router.post("/verify-otp", verifyOTP);
+
+
+module.exports = router;
+
