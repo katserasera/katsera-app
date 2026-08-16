@@ -1,0 +1,10 @@
+{
+  "description": "A modern platform for artists to showcase artwork, explore creative portfolios, and connect through clean, responsive profiles and easy login access.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
