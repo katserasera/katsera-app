@@ -1,6 +1,5 @@
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import katseraLogo from "@/imports/katsera_logo.png"
 
 export default function Launch() {
   const navigate = useNavigate()
@@ -14,7 +13,7 @@ export default function Launch() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#E8E8E8] font-[Nunito] px-4">
       <div className="flex flex-col items-center gap-3">
         <img
-          src={katseraLogo}
+          src="/katsera_logo.png"
           alt="Katsera Logo"
           className="w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-lg"
         />
@@ -25,4 +24,5 @@ export default function Launch() {
     </div>
   )
 }
+
 

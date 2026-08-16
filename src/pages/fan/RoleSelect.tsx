@@ -48,9 +48,10 @@ export default function RoleSelect() {
         <div>
           {/* Katsera Logo Header */}
           <div className="flex items-center gap-3 mb-6 bg-white/10 backdrop-blur-md p-3 rounded-2xl w-fit border border-white/20 shadow-md">
-            <img src={katseraLogo} alt="Katsera Logo" className="w-10 h-10 object-contain" />
+            <img src="/katsera_logo.png" alt="Katsera Logo" className="w-10 h-10 object-contain" />
             <span className="text-white font-extrabold text-xl tracking-wide">Katsera</span>
           </div>
+
 
           <h1 className="text-white text-4xl sm:text-5xl font-extrabold leading-tight mt-2 max-w-xs">
             Who are you signing up as?
