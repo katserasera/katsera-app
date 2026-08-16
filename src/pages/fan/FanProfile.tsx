@@ -1,15 +1,28 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 
 export default function FanProfile() {
   const navigate = useNavigate()
   const [showLogout, setShowLogout] = useState(false)
+  
+  const savedUser = JSON.parse(localStorage.getItem("katsera_user") || "{}")
   const [form, setForm] = useState({
-    email: "Mart1n_imup@gmail.com",
-    name: "Martin Cortis",
+    email: savedUser.email || "cornelliusadrn@gmail.com",
+    name: savedUser.name || "Cornellius Adran",
     telephone: "081316877777",
-    address: "Sumedang, Jawa Barat",
+    address: "Jakarta, Indonesia",
   })
+
+  useEffect(() => {
+    if (savedUser.name || savedUser.email) {
+      setForm((prev) => ({
+        ...prev,
+        email: savedUser.email || prev.email,
+        name: savedUser.name || prev.name,
+      }))
+    }
+  }, [])
+
 
   const handleChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }))

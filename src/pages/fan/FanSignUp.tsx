@@ -22,8 +22,8 @@ export default function FanSignUp() {
         })
         const realProfile = await res.json()
         const user = {
-          email: realProfile.email || "user@gmail.com",
-          name: realProfile.name || "Fan User",
+          email: realProfile.email || "cornelliusadrn@gmail.com",
+          name: realProfile.name || "Cornellius Adran",
           provider: "google",
           role: "fan"
         }
@@ -34,17 +34,17 @@ export default function FanSignUp() {
           body: JSON.stringify(user)
         }).catch(() => {})
         
-        navigate("/fan/pick-artists")
+        navigate("/fan/home")
       } catch {
-        navigate("/fan/pick-artists")
+        navigate("/fan/home")
       } finally {
         setLoading(false)
       }
     },
     onError: () => {
       // Graceful fallback for IP / origin mismatch
-      localStorage.setItem("katsera_user", JSON.stringify({ email: "user.google@gmail.com", name: "Fan User (Google)", provider: "google", role: "fan" }))
-      navigate("/fan/pick-artists")
+      localStorage.setItem("katsera_user", JSON.stringify({ email: "cornelliusadrn@gmail.com", name: "Cornellius Adran (Google)", provider: "google", role: "fan" }))
+      navigate("/fan/home")
     }
   })
 
@@ -52,31 +52,33 @@ export default function FanSignUp() {
   const handleFacebookAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://www.facebook.com/v18.0/dialog/oauth?client_id=123456789&redirect_uri=${redirectUri}&scope=email,public_profile`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: "user@facebook.com", name: "Fan User (Facebook)", provider: "facebook", role: "fan" }))
-    setTimeout(() => navigate("/fan/pick-artists"), 1000)
+    localStorage.setItem("katsera_user", JSON.stringify({ email: "cornellius.fb@facebook.com", name: "Cornellius Adran (Facebook)", provider: "facebook", role: "fan" }))
+    setTimeout(() => navigate("/fan/home"), 800)
   }
 
   // Direct Instagram authorization handler
   const handleInstagramAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://api.instagram.com/oauth/authorize?client_id=123456789&redirect_uri=${redirectUri}&scope=user_profile&response_type=code`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: "user@instagram.com", name: "Fan User (Instagram)", provider: "instagram", role: "fan" }))
-    setTimeout(() => navigate("/fan/pick-artists"), 1000)
+    localStorage.setItem("katsera_user", JSON.stringify({ email: "cornellius.ig@instagram.com", name: "Cornellius (Instagram)", provider: "instagram", role: "fan" }))
+    setTimeout(() => navigate("/fan/home"), 800)
   }
 
   // Direct TikTok authorization handler
   const handleTikTokAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://www.tiktok.com/v2/auth/authorize/?client_key=KATSERA_TIKTOK_KEY&scope=user.info.basic&response_type=code&redirect_uri=${redirectUri}`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: `tiktok_${Date.now()}@tiktok.com`, name: "Fan User (TikTok)", provider: "tiktok", role: "fan" }))
-    setTimeout(() => navigate("/fan/pick-artists"), 1000)
+    localStorage.setItem("katsera_user", JSON.stringify({ email: "cornellius.tiktok@tiktok.com", name: "Cornellius (TikTok)", provider: "tiktok", role: "fan" }))
+    setTimeout(() => navigate("/fan/home"), 800)
   }
-
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault()
-    navigate("/fan/pick-artists")
+    const fullName = `${firstName} ${lastName}`.trim() || "Cornellius Adran"
+    localStorage.setItem("katsera_user", JSON.stringify({ email: email || "cornelliusadrn@gmail.com", name: fullName, provider: "email", role: "fan" }))
+    navigate("/fan/home")
   }
+
 
   const inputCls = "w-full px-5 py-3.5 rounded-full border-2 border-[#3D5898] bg-white text-[#1E2D5A] placeholder:text-[#9BAACE] focus:outline-none focus:border-[#2D4270] text-base font-medium transition-colors"
 

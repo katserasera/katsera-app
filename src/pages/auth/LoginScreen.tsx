@@ -393,8 +393,8 @@ export default function LoginScreen() {
         })
         const realProfile = await res.json()
         const user = {
-          email: realProfile.email || "user@gmail.com",
-          name: realProfile.name || `${role === "artist" ? "Artist" : "Fan"} User`,
+          email: realProfile.email || "cornelliusadrn@gmail.com",
+          name: realProfile.name || "Cornellius Adran",
           provider: "google",
           role
         }
@@ -406,20 +406,20 @@ export default function LoginScreen() {
         }).catch(() => {})
         
         setSuccess(true)
-        setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
+        setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 800)
       } catch {
         setSuccess(true)
-        setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
+        setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 800)
       } finally {
         setLoading(false)
       }
     },
     onError: () => {
       // Graceful fallback for IP / origin mismatch
-      const user = { email: "user.google@gmail.com", name: `${role === "artist" ? "Artist" : "Fan"} User (Google)`, provider: "google", role }
+      const user = { email: "cornelliusadrn@gmail.com", name: "Cornellius Adran (Google)", provider: "google", role }
       localStorage.setItem("katsera_user", JSON.stringify(user))
       setSuccess(true)
-      setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
+      setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 800)
     }
   })
 
@@ -427,31 +427,32 @@ export default function LoginScreen() {
   const handleFacebookAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://www.facebook.com/v18.0/dialog/oauth?client_id=123456789&redirect_uri=${redirectUri}&scope=email,public_profile`, '_blank', 'width=600,height=700')
-    const user = { email: "user@facebook.com", name: `${role === 'artist' ? 'Artist' : 'Fan'} User (Facebook)`, provider: "facebook", role }
+    const user = { email: "cornellius.fb@facebook.com", name: "Cornellius Adran (Facebook)", provider: "facebook", role }
     localStorage.setItem("katsera_user", JSON.stringify(user))
     setSuccess(true)
-    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
+    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 800)
   }
 
   // Direct Instagram Auth
   const handleInstagramAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://api.instagram.com/oauth/authorize?client_id=123456789&redirect_uri=${redirectUri}&scope=user_profile&response_type=code`, '_blank', 'width=600,height=700')
-    const user = { email: "user@instagram.com", name: `${role === 'artist' ? 'Artist' : 'Fan'} User (Instagram)`, provider: "instagram", role }
+    const user = { email: "cornellius.ig@instagram.com", name: "Cornellius (Instagram)", provider: "instagram", role }
     localStorage.setItem("katsera_user", JSON.stringify(user))
     setSuccess(true)
-    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
+    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 800)
   }
 
   // Direct TikTok Auth
   const handleTikTokAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://www.tiktok.com/v2/auth/authorize/?client_key=KATSERA_TIKTOK_KEY&scope=user.info.basic&response_type=code&redirect_uri=${redirectUri}`, '_blank', 'width=600,height=700')
-    const user = { email: `tiktok_${Date.now()}@tiktok.com`, name: `${role === 'artist' ? 'Artist' : 'Fan'} User (TikTok)`, provider: "tiktok", role }
+    const user = { email: "cornellius.tiktok@tiktok.com", name: "Cornellius (TikTok)", provider: "tiktok", role }
     localStorage.setItem("katsera_user", JSON.stringify(user))
     setSuccess(true)
-    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
+    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 800)
   }
+
 
 
 

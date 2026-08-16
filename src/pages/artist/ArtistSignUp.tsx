@@ -20,8 +20,8 @@ export default function ArtistSignUp() {
         })
         const realProfile = await res.json()
         const user = {
-          email: realProfile.email || "artist@gmail.com",
-          name: realProfile.name || "Artist User",
+          email: realProfile.email || "cornelliusadrn@gmail.com",
+          name: realProfile.name || "Cornellius Adran",
           provider: "google",
           role: "artist"
         }
@@ -32,17 +32,17 @@ export default function ArtistSignUp() {
           body: JSON.stringify(user)
         }).catch(() => {})
         
-        navigate("/artist/verify")
+        navigate("/artist/dashboard")
       } catch {
-        navigate("/artist/verify")
+        navigate("/artist/dashboard")
       } finally {
         setLoading(false)
       }
     },
     onError: () => {
       // Graceful fallback for IP / origin mismatch
-      localStorage.setItem("katsera_user", JSON.stringify({ email: "artist.google@gmail.com", name: "Artist User (Google)", provider: "google", role: "artist" }))
-      navigate("/artist/verify")
+      localStorage.setItem("katsera_user", JSON.stringify({ email: "cornelliusadrn@gmail.com", name: "Cornellius Adran (Google)", provider: "google", role: "artist" }))
+      navigate("/artist/dashboard")
     }
   })
 
@@ -50,31 +50,32 @@ export default function ArtistSignUp() {
   const handleFacebookAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://www.facebook.com/v18.0/dialog/oauth?client_id=123456789&redirect_uri=${redirectUri}&scope=email,public_profile`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: "artist@facebook.com", name: "Artist User (Facebook)", provider: "facebook", role: "artist" }))
-    setTimeout(() => navigate("/artist/verify"), 1000)
+    localStorage.setItem("katsera_user", JSON.stringify({ email: "cornellius.fb@facebook.com", name: "Cornellius Adran (Facebook)", provider: "facebook", role: "artist" }))
+    setTimeout(() => navigate("/artist/dashboard"), 800)
   }
 
   // Direct Instagram authorization for Artist
   const handleInstagramAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://api.instagram.com/oauth/authorize?client_id=123456789&redirect_uri=${redirectUri}&scope=user_profile&response_type=code`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: "artist@instagram.com", name: "Artist User (Instagram)", provider: "instagram", role: "artist" }))
-    setTimeout(() => navigate("/artist/verify"), 1000)
+    localStorage.setItem("katsera_user", JSON.stringify({ email: "cornellius.ig@instagram.com", name: "Cornellius (Instagram)", provider: "instagram", role: "artist" }))
+    setTimeout(() => navigate("/artist/dashboard"), 800)
   }
 
   // Direct TikTok authorization for Artist
   const handleTikTokAuth = () => {
     const redirectUri = encodeURIComponent(window.location.origin)
     window.open(`https://www.tiktok.com/v2/auth/authorize/?client_key=KATSERA_TIKTOK_KEY&scope=user.info.basic&response_type=code&redirect_uri=${redirectUri}`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: `tiktok_${Date.now()}@tiktok.com`, name: "Artist User (TikTok)", provider: "tiktok", role: "artist" }))
-    setTimeout(() => navigate("/artist/verify"), 1000)
+    localStorage.setItem("katsera_user", JSON.stringify({ email: "cornellius.tiktok@tiktok.com", name: "Cornellius (TikTok)", provider: "tiktok", role: "artist" }))
+    setTimeout(() => navigate("/artist/dashboard"), 800)
   }
-
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault()
-    navigate("/artist/verify")
+    localStorage.setItem("katsera_user", JSON.stringify({ email: email || "cornelliusadrn@gmail.com", name: "Cornellius Adran", provider: "email", role: "artist" }))
+    navigate("/artist/dashboard")
   }
+
 
   const inputCls =
     "w-full px-5 py-3.5 rounded-full border-2 border-[#3D5898] bg-white text-[#1E2D5A] placeholder:text-[#9BAACE] focus:outline-none focus:border-[#2D4270] text-base font-medium transition-colors"
