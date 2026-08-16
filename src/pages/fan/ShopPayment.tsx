@@ -18,9 +18,9 @@ export default function ShopPayment() {
 
   const handlePay = () => {
     if (!method) return
-    setPaying(true)
-    setTimeout(() => navigate("/fan/shop/done"), 1500)
+    navigate("/payment/timer", { state: { amount: total, label: product.name, method, returnPath: "/fan/shop/done" } })
   }
+
 
   return (
     <div className="min-h-screen bg-[#E8E8E8] flex flex-col max-w-md mx-auto font-[Nunito]">
