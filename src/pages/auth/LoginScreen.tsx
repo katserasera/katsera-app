@@ -357,8 +357,7 @@ function OTPVerificationModal({ email, onClose, onSuccess }: { email: string; on
 }
 
 // ── Main Login Screen ─────────────────────────────────────────────────────────
-import { useGoogleLogin } from "@react-oauth/google"
-import { TikTokIcon } from "@/components/auth/SocialAuthModal"
+import SocialAuthModal, { SocialProvider, GoogleIcon, FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/auth/SocialAuthModal"
 
 type LoginMode = "choose" | "email" | "email-sent"
 type AuthRole = "fan" | "artist"
@@ -374,6 +373,7 @@ export default function LoginScreen() {
 
   const [mode, setMode] = useState<LoginMode>("choose")
   const [showOTP, setShowOTP] = useState(false)
+  const [activeSocialModal, setActiveSocialModal] = useState<SocialProvider | null>(null)
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -383,75 +383,6 @@ export default function LoginScreen() {
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
 
-  // Direct Google Login on Login screen
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true)
-      try {
-        const res = await fetch("https://www.googleapis.com/oauth2/0.3/userinfo", {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        })
-        const realProfile = await res.json()
-        const user = {
-          email: realProfile.email || "user@gmail.com",
-          name: realProfile.name || `${role === "artist" ? "Artist" : "Fan"} User`,
-          provider: "google",
-          role
-        }
-        localStorage.setItem("katsera_user", JSON.stringify(user))
-        await fetch("http://localhost:5000/api/auth/social-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(user)
-        }).catch(() => {})
-        
-        setSuccess(true)
-        setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
-      } catch {
-        setSuccess(true)
-        setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
-      } finally {
-        setLoading(false)
-      }
-    },
-    onError: () => {
-      // Graceful fallback for IP / origin mismatch
-      const user = { email: "user.google@gmail.com", name: `${role === "artist" ? "Artist" : "Fan"} User (Google)`, provider: "google", role }
-      localStorage.setItem("katsera_user", JSON.stringify(user))
-      setSuccess(true)
-      setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
-    }
-  })
-
-  // Direct Facebook Auth
-  const handleFacebookAuth = () => {
-    const redirectUri = encodeURIComponent(window.location.origin)
-    window.open(`https://www.facebook.com/v18.0/dialog/oauth?client_id=123456789&redirect_uri=${redirectUri}&scope=email,public_profile`, '_blank', 'width=600,height=700')
-    const user = { email: "user@facebook.com", name: `${role === 'artist' ? 'Artist' : 'Fan'} User (Facebook)`, provider: "facebook", role }
-    localStorage.setItem("katsera_user", JSON.stringify(user))
-    setSuccess(true)
-    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
-  }
-
-  // Direct Instagram Auth
-  const handleInstagramAuth = () => {
-    const redirectUri = encodeURIComponent(window.location.origin)
-    window.open(`https://api.instagram.com/oauth/authorize?client_id=123456789&redirect_uri=${redirectUri}&scope=user_profile&response_type=code`, '_blank', 'width=600,height=700')
-    const user = { email: "user@instagram.com", name: `${role === 'artist' ? 'Artist' : 'Fan'} User (Instagram)`, provider: "instagram", role }
-    localStorage.setItem("katsera_user", JSON.stringify(user))
-    setSuccess(true)
-    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
-  }
-
-  // Direct TikTok Auth
-  const handleTikTokAuth = () => {
-    const redirectUri = encodeURIComponent(window.location.origin)
-    window.open(`https://www.tiktok.com/v2/auth/authorize/?client_key=KATSERA_TIKTOK_KEY&scope=user.info.basic&response_type=code&redirect_uri=${redirectUri}`, '_blank', 'width=600,height=700')
-    const user = { email: `tiktok_${Date.now()}@tiktok.com`, name: `${role === 'artist' ? 'Artist' : 'Fan'} User (TikTok)`, provider: "tiktok", role }
-    localStorage.setItem("katsera_user", JSON.stringify(user))
-    setSuccess(true)
-    setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 1000)
-  }
 
 
 
@@ -597,7 +528,7 @@ export default function LoginScreen() {
           <button
             type="button"
             disabled={loading}
-            onClick={() => loginWithGoogle()}
+            onClick={() => setActiveSocialModal("google")}
             className="w-full bg-white rounded-2xl py-3.5 flex items-center justify-center gap-3 shadow-sm border border-[#E0E5F2] font-extrabold text-[#1E2D5A] text-sm active:scale-95 transition-transform"
           >
             <GoogleIcon />
@@ -608,7 +539,7 @@ export default function LoginScreen() {
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
-              onClick={handleFacebookAuth}
+              onClick={() => setActiveSocialModal("facebook")}
               className="bg-white rounded-2xl py-3 flex items-center justify-center gap-2 border border-[#1877F2] text-[#1877F2] font-bold text-xs active:scale-95 transition-transform shadow-sm"
             >
               <FacebookIcon />
@@ -617,7 +548,7 @@ export default function LoginScreen() {
 
             <button
               type="button"
-              onClick={handleInstagramAuth}
+              onClick={() => setActiveSocialModal("instagram")}
               className="bg-white rounded-2xl py-3 flex items-center justify-center gap-2 border border-[#d6249f] text-[#d6249f] font-bold text-xs active:scale-95 transition-transform shadow-sm"
             >
               <InstagramIcon />
@@ -626,13 +557,14 @@ export default function LoginScreen() {
 
             <button
               type="button"
-              onClick={handleTikTokAuth}
+              onClick={() => setActiveSocialModal("tiktok")}
               className="bg-white rounded-2xl py-3 flex items-center justify-center gap-2 border border-black text-black font-bold text-xs active:scale-95 transition-transform shadow-sm"
             >
               <TikTokIcon />
               TikTok
             </button>
           </div>
+
 
 
 
@@ -742,18 +674,20 @@ export default function LoginScreen() {
             <div className="flex-1 h-px bg-[#E0E5F2]" />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <button type="button" onClick={() => loginWithGoogle()} className="bg-white rounded-2xl py-3 flex items-center justify-center shadow-sm border border-[#E0E5F2]">
+          <div className="grid grid-cols-4 gap-2">
+            <button type="button" onClick={() => setActiveSocialModal("google")} className="bg-white rounded-2xl py-3 flex items-center justify-center shadow-sm border border-[#E0E5F2] hover:bg-slate-50 transition-colors">
               <GoogleIcon />
             </button>
-            <button type="button" onClick={() => setShowInstagram(true)} className="bg-white rounded-2xl py-3 flex items-center justify-center shadow-sm border border-[#E0E5F2]">
-              <InstagramIcon />
-            </button>
-            <button type="button" onClick={() => setShowFacebook(true)} className="bg-white rounded-2xl py-3 flex items-center justify-center shadow-sm border border-[#E0E5F2]">
+            <button type="button" onClick={() => setActiveSocialModal("facebook")} className="bg-white rounded-2xl py-3 flex items-center justify-center shadow-sm border border-[#E0E5F2] hover:bg-slate-50 transition-colors">
               <FacebookIcon />
             </button>
+            <button type="button" onClick={() => setActiveSocialModal("instagram")} className="bg-white rounded-2xl py-3 flex items-center justify-center shadow-sm border border-[#E0E5F2] hover:bg-slate-50 transition-colors">
+              <InstagramIcon />
+            </button>
+            <button type="button" onClick={() => setActiveSocialModal("tiktok")} className="bg-white rounded-2xl py-3 flex items-center justify-center shadow-sm border border-[#E0E5F2] hover:bg-slate-50 transition-colors">
+              <TikTokIcon />
+            </button>
           </div>
-
 
           <p className="text-center text-[#9BAACE] text-sm mt-6">
             New here?{" "}
@@ -761,6 +695,22 @@ export default function LoginScreen() {
           </p>
         </div>
       )}
+
+      {/* Interactive Social Auth Modal */}
+      {activeSocialModal && (
+        <SocialAuthModal
+          provider={activeSocialModal}
+          role={role}
+          onClose={() => setActiveSocialModal(null)}
+          onSuccess={(userData) => {
+            setActiveSocialModal(null)
+            localStorage.setItem("katsera_user", JSON.stringify(userData))
+            setSuccess(true)
+            setTimeout(() => navigate(role === "artist" ? "/artist/dashboard" : "/fan/home"), 800)
+          }}
+        />
+      )}
     </div>
   )
 }
+

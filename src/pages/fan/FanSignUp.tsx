@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { useGoogleLogin } from "@react-oauth/google"
-import { GoogleIcon, FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/auth/SocialAuthModal"
+import SocialAuthModal, { SocialProvider, GoogleIcon, FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/auth/SocialAuthModal"
 
 export default function FanSignUp() {
   const navigate = useNavigate()
@@ -11,71 +10,46 @@ export default function FanSignUp() {
   const [password, setPassword] = useState("")
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [activeModal, setActiveModal] = useState<SocialProvider | null>(null)
 
-  // Direct Google OAuth authorization hook
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true)
-      try {
-        const res = await fetch("https://www.googleapis.com/oauth2/0.3/userinfo", {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        })
-        const realProfile = await res.json()
-        const user = {
-          email: realProfile.email || "user@gmail.com",
-          name: realProfile.name || "Fan User",
-          provider: "google",
-          role: "fan"
-        }
-        localStorage.setItem("katsera_user", JSON.stringify(user))
-        await fetch("http://localhost:5000/api/auth/social-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(user)
-        }).catch(() => {})
-        
-        navigate("/fan/pick-artists")
-      } catch {
-        navigate("/fan/pick-artists")
-      } finally {
-        setLoading(false)
-      }
-    },
-    onError: () => {
-      // Graceful fallback for IP / origin mismatch
-      localStorage.setItem("katsera_user", JSON.stringify({ email: "user.google@gmail.com", name: "Fan User (Google)", provider: "google", role: "fan" }))
-      navigate("/fan/pick-artists")
-    }
-  })
-
-  // Direct Facebook authorization handler
-  const handleFacebookAuth = () => {
-    const redirectUri = encodeURIComponent(window.location.origin)
-    window.open(`https://www.facebook.com/v18.0/dialog/oauth?client_id=123456789&redirect_uri=${redirectUri}&scope=email,public_profile`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: "user@facebook.com", name: "Fan User (Facebook)", provider: "facebook", role: "fan" }))
-    setTimeout(() => navigate("/fan/pick-artists"), 1000)
-  }
-
-  // Direct Instagram authorization handler
-  const handleInstagramAuth = () => {
-    const redirectUri = encodeURIComponent(window.location.origin)
-    window.open(`https://api.instagram.com/oauth/authorize?client_id=123456789&redirect_uri=${redirectUri}&scope=user_profile&response_type=code`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: "user@instagram.com", name: "Fan User (Instagram)", provider: "instagram", role: "fan" }))
-    setTimeout(() => navigate("/fan/pick-artists"), 1000)
-  }
-
-  // Direct TikTok authorization handler
-  const handleTikTokAuth = () => {
-    const redirectUri = encodeURIComponent(window.location.origin)
-    window.open(`https://www.tiktok.com/v2/auth/authorize/?client_key=KATSERA_TIKTOK_KEY&scope=user.info.basic&response_type=code&redirect_uri=${redirectUri}`, '_blank', 'width=600,height=700')
-    localStorage.setItem("katsera_user", JSON.stringify({ email: `tiktok_${Date.now()}@tiktok.com`, name: "Fan User (TikTok)", provider: "tiktok", role: "fan" }))
-    setTimeout(() => navigate("/fan/pick-artists"), 1000)
-  }
-
-
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault()
-    navigate("/fan/pick-artists")
+    if (!email) {
+      setError("Please enter your email address")
+      return
+    }
+    if (!password) {
+      setError("Please enter your password")
+      return
+    }
+
+    setLoading(true)
+    setError("")
+
+    const fullName = `${firstName} ${lastName}`.trim() || email.split("@")[0] || "Fan User"
+    const userAuth = {
+      email: email.trim().toLowerCase(),
+      password,
+      name: fullName,
+      role: "fan",
+      createdAt: new Date().toISOString()
+    }
+    localStorage.setItem("katsera_pending_auth", JSON.stringify(userAuth))
+    localStorage.setItem("katsera_user", JSON.stringify(userAuth))
+
+    try {
+      await fetch("http://localhost:5000/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userAuth.email, role: "fan" })
+      })
+    } catch {
+      // Local fallback
+    }
+
+    setLoading(false)
+    navigate("/fan/verify", { state: { email: userAuth.email } })
   }
 
   const inputCls = "w-full px-5 py-3.5 rounded-full border-2 border-[#3D5898] bg-white text-[#1E2D5A] placeholder:text-[#9BAACE] focus:outline-none focus:border-[#2D4270] text-base font-medium transition-colors"
@@ -148,7 +122,7 @@ export default function FanSignUp() {
           <button
             type="button"
             disabled={loading}
-            onClick={() => loginWithGoogle()}
+            onClick={() => setActiveModal("google")}
             className="w-full flex items-center justify-center gap-3 py-3 rounded-full border-2 border-[#3D5898] bg-white text-[#1E2D5A] font-extrabold text-sm hover:bg-[#f5f7fd] active:scale-95 transition-all shadow-sm disabled:opacity-50"
           >
             <GoogleIcon />
@@ -159,7 +133,7 @@ export default function FanSignUp() {
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
-              onClick={handleFacebookAuth}
+              onClick={() => setActiveModal("facebook")}
               className="flex items-center justify-center gap-1.5 py-3 rounded-full border-2 border-[#1877F2] bg-white text-[#1877F2] font-extrabold text-xs hover:bg-[#f0f7ff] active:scale-95 transition-all shadow-sm"
             >
               <FacebookIcon />
@@ -168,7 +142,7 @@ export default function FanSignUp() {
 
             <button
               type="button"
-              onClick={handleInstagramAuth}
+              onClick={() => setActiveModal("instagram")}
               className="flex items-center justify-center gap-1.5 py-3 rounded-full border-2 border-[#d6249f] bg-white text-[#d6249f] font-extrabold text-xs hover:bg-[#fdf0f9] active:scale-95 transition-all shadow-sm"
             >
               <InstagramIcon />
@@ -177,14 +151,13 @@ export default function FanSignUp() {
 
             <button
               type="button"
-              onClick={handleTikTokAuth}
+              onClick={() => setActiveModal("tiktok")}
               className="flex items-center justify-center gap-1.5 py-3 rounded-full border-2 border-black bg-white text-black font-extrabold text-xs hover:bg-gray-50 active:scale-95 transition-all shadow-sm"
             >
               <TikTokIcon />
               TikTok
             </button>
           </div>
-
         </div>
 
         {/* Divider */}
@@ -255,12 +228,15 @@ export default function FanSignUp() {
             </button>
           </div>
 
+          {error && <p className="text-red-500 text-xs font-bold text-center">{error}</p>}
+
           {/* Continue */}
           <button
             type="submit"
-            className="w-full py-4 rounded-full bg-[#3D5898] text-white font-bold text-lg hover:bg-[#2D4270] active:scale-95 transition-all shadow-md mt-2"
+            disabled={loading}
+            className="w-full py-4 rounded-full bg-[#3D5898] text-white font-bold text-lg hover:bg-[#2D4270] active:scale-95 transition-all shadow-md mt-2 disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            Continue
+            {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Continue"}
           </button>
         </form>
 
@@ -277,7 +253,21 @@ export default function FanSignUp() {
           </Link>
         </p>
       </div>
+
+      {/* Social Auth Modal */}
+      {activeModal && (
+        <SocialAuthModal
+          provider={activeModal}
+          role="fan"
+          onClose={() => setActiveModal(null)}
+          onSuccess={(userData) => {
+            setActiveModal(null)
+            localStorage.setItem("katsera_user", JSON.stringify(userData))
+            localStorage.setItem("katsera_pending_auth", JSON.stringify(userData))
+            navigate("/fan/pick-artists")
+          }}
+        />
+      )}
     </div>
   )
 }
-

@@ -1,13 +1,13 @@
 import { useRef, useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 
-export default function ArtistVerify() {
+export default function FanVerify() {
   const navigate = useNavigate()
   const location = useLocation()
   
   const savedAuth = JSON.parse(localStorage.getItem("katsera_pending_auth") || "{}")
   const savedUser = JSON.parse(localStorage.getItem("katsera_user") || "{}")
-  const targetEmail = (location.state as { email?: string })?.email || savedAuth.email || savedUser.email || "artist@katsera.com"
+  const targetEmail = (location.state as { email?: string })?.email || savedAuth.email || savedUser.email || "fan@katsera.com"
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const [countdown, setCountdown] = useState(28)
@@ -23,7 +23,7 @@ export default function ArtistVerify() {
       const res = await fetch("http://localhost:5000/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: targetEmail, role: "artist" })
+        body: JSON.stringify({ email: targetEmail, role: "fan" })
       })
       const data = await res.json()
       const code = data.otpCode || Math.floor(100000 + Math.random() * 900000).toString()
@@ -90,19 +90,19 @@ export default function ArtistVerify() {
       const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: targetEmail, code: enteredCode, role: "artist" })
+        body: JSON.stringify({ email: targetEmail, code: enteredCode, role: "fan" })
       })
       const data = await res.json()
 
       if (res.ok && data.success) {
         localStorage.setItem("katsera_user", JSON.stringify({
           email: targetEmail,
-          name: targetEmail.split("@")[0] || "Artist User",
-          role: "artist",
+          name: targetEmail.split("@")[0] || "Fan User",
+          role: "fan",
           isVerified: true
         }))
         setVerified(true)
-        setTimeout(() => navigate("/artist/identity"), 1000)
+        setTimeout(() => navigate("/fan/pick-artists"), 1000)
       } else {
         // STRICT FAILURE: Wrong OTP
         setError(data.message || "Kode OTP salah! Verifikasi gagal, silakan cek email Anda.")
@@ -113,12 +113,12 @@ export default function ArtistVerify() {
       if (activeOtpCode && enteredCode === activeOtpCode) {
         localStorage.setItem("katsera_user", JSON.stringify({
           email: targetEmail,
-          name: targetEmail.split("@")[0] || "Artist User",
-          role: "artist",
+          name: targetEmail.split("@")[0] || "Fan User",
+          role: "fan",
           isVerified: true
         }))
         setVerified(true)
-        setTimeout(() => navigate("/artist/identity"), 1000)
+        setTimeout(() => navigate("/fan/pick-artists"), 1000)
       } else {
         // STRICT FAILURE: Wrong OTP
         setError("Kode OTP salah! Verifikasi gagal, silakan cek email Anda.")
@@ -131,14 +131,13 @@ export default function ArtistVerify() {
   }
 
 
-
   if (verified) return (
     <div className="min-h-screen bg-[#E8E8E8] flex flex-col items-center justify-center max-w-md mx-auto font-[Nunito] gap-4 px-8">
       <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
         <svg width="36" height="36" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
       </div>
       <p className="text-[#1E2D5A] font-extrabold text-2xl">Email Verified!</p>
-      <p className="text-[#7A8BB5] text-sm">Redirecting you...</p>
+      <p className="text-[#7A8BB5] text-sm">Setting up your fan space...</p>
     </div>
   )
 
@@ -162,7 +161,6 @@ export default function ArtistVerify() {
 
         {/* OTP boxes — responsive, gap scales with screen */}
         <div className="flex justify-between gap-2 sm:gap-3 mb-3 w-full" onPaste={handlePaste}>
-
           {otp.map((digit, i) => (
             <input
               key={i}
@@ -209,7 +207,6 @@ export default function ArtistVerify() {
         >
           {countdown > 0 ? `Resend Code in ${countdown}s` : "Resend Code"}
         </button>
-
 
         <div className="h-px bg-[#C8D0E8] mb-6" />
 

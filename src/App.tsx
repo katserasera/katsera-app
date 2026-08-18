@@ -6,7 +6,9 @@ import Launch from "./pages/fan/Launch"
 import RoleSelect from "./pages/fan/RoleSelect"
 import Welcome from "./pages/fan/Welcome"
 import FanSignUp from "./pages/fan/FanSignUp"
+import FanVerify from "./pages/fan/FanVerify"
 import ArtistPick from "./pages/fan/ArtistPick"
+
 import FanDashboard from "./pages/fan/FanDashboard"
 import ArtistProfileFan from "./pages/fan/ArtistProfileFan"
 
@@ -157,7 +159,9 @@ export default function App() {
         {/* ── Fan ── */}
         <Route path="/fan/welcome" element={<Welcome />} />
         <Route path="/fan/signup" element={<FanSignUp />} />
+        <Route path="/fan/verify" element={<FanVerify />} />
         <Route path="/fan/pick-artists" element={<ArtistPick />} />
+
         <Route path="/fan/home" element={<FanDashboard />} />
         <Route path="/fan/artist/:id" element={<ArtistProfileFan />} />
         <Route path="/fan/more" element={<FanMoreTab />} />

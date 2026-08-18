@@ -171,36 +171,79 @@ exports.sendOTP = async (req, res) => {
             expiresAt: Date.now() + 10 * 60 * 1000
         });
 
-        // Send email via Nodemailer
-        try {
-            const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST || "smtp.gmail.com",
-                port: parseInt(process.env.SMTP_PORT || "587"),
-                secure: false,
-                auth: {
-                    user: process.env.SMTP_USER || "noreply.katsera@gmail.com",
-                    pass: process.env.SMTP_PASS || "katserapassword123"
-                }
-            });
+        // 1. Send via Resend API (Recommended - Fast & Reliable)
+        if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.startsWith("re_")) {
+            try {
+                const { Resend } = require("resend");
+                const resend = new Resend(process.env.RESEND_API_KEY.trim());
+                const fromAddress = process.env.RESEND_FROM || "Katsera <onboarding@resend.dev>";
 
-            await transporter.sendMail({
-                from: '"Katsera App" <noreply.katsera@gmail.com>',
-                to: email,
-                subject: `${otpCode} is your Katsera Verification Code`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 500px; border: 1px solid #e8e8e8; border-radius: 12px;">
-                        <h2 style="color: #1E2D5A;">Verify Your Katsera Account</h2>
-                        <p style="color: #4A5A80; font-size: 15px;">Your official 6-digit verification code is:</p>
-                        <div style="background-color: #3D5898; color: #ffffff; font-size: 32px; font-weight: bold; text-align: center; padding: 15px; border-radius: 8px; letter-spacing: 5px;">
-                            ${otpCode}
+                const { data, error } = await resend.emails.send({
+                    from: fromAddress,
+                    to: [email],
+                    subject: `${otpCode} adalah Kode Verifikasi Katsera Anda`,
+                    html: `
+                        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 28px; max-width: 480px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e5f2; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                            <div style="text-align: center; margin-bottom: 24px;">
+                                <h1 style="color: #3D5898; font-size: 26px; font-weight: 800; margin: 0;">Katsera</h1>
+                                <p style="color: #7A8BB5; font-size: 13px; margin-top: 4px;">All the vibes, all the updates</p>
+                            </div>
+                            <h2 style="color: #1E2D5A; font-size: 18px; font-weight: 700; margin-bottom: 8px;">Verifikasi Akun Anda</h2>
+                            <p style="color: #4A5A80; font-size: 14px; line-height: 1.5; margin-bottom: 20px;">Berikut adalah 6 digit kode OTP verifikasi untuk akun Katsera Anda:</p>
+                            <div style="background-color: #3D5898; color: #ffffff; font-size: 32px; font-weight: 800; text-align: center; padding: 16px; border-radius: 12px; letter-spacing: 8px; margin: 20px 0;">
+                                ${otpCode}
+                            </div>
+                            <p style="color: #7A8BB5; font-size: 12px; line-height: 1.4; margin-top: 24px; border-top: 1px solid #f0f3fa; pt: 16px;">Kode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun.</p>
                         </div>
-                        <p style="color: #7A8BB5; font-size: 13px; margin-top: 20px;">This code will expire in 10 minutes. If you did not request this code, please ignore this email.</p>
-                    </div>
-                `
-            }).catch(() => {});
-        } catch {
-            // Fallback if SMTP not configured
+                    `
+                });
+
+                if (error) {
+                    console.error("[RESEND API ERROR]:", error);
+                } else {
+                    console.log(`[RESEND API SUCCESS] OTP email sent to ${email}, ID: ${data?.id}`);
+                }
+            } catch (resendErr) {
+                console.error("[RESEND EXCEPTION]:", resendErr.message);
+            }
+        } else {
+            // 2. Fallback to Nodemailer SMTP
+            try {
+                const cleanPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
+                const smtpUser = process.env.SMTP_USER || "cornelliusadrn@gmail.com";
+                const appName = process.env.APP_NAME || "Katsera";
+                const isSecure = (process.env.SMTP_SECURE === "true") || (process.env.SMTP_PORT === "465");
+
+                const transporter = nodemailer.createTransport({
+                    service: "gmail",
+                    host: process.env.SMTP_HOST || "smtp.gmail.com",
+                    port: parseInt(process.env.SMTP_PORT || "465"),
+                    secure: isSecure,
+                    auth: {
+                        user: smtpUser,
+                        pass: cleanPass
+                    }
+                });
+
+                await transporter.sendMail({
+                    from: `"${appName}" <${smtpUser}>`,
+                    to: email,
+                    subject: `${otpCode} adalah Kode Verifikasi ${appName} Anda`,
+                    html: `
+                        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 28px; max-width: 480px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e5f2; border-radius: 16px;">
+                            <h1 style="color: #3D5898; font-size: 24px; font-weight: bold;">Katsera</h1>
+                            <h2>Verifikasi Akun</h2>
+                            <p>Kode OTP Anda: <b>${otpCode}</b></p>
+                        </div>
+                    `
+                });
+                console.log(`[SMTP] Real OTP ${otpCode} successfully sent to ${email}`);
+            } catch (mailErr) {
+                // SMTP not ready yet
+            }
         }
+
+
 
         return res.status(200).json({
             success: true,

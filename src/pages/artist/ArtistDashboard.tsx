@@ -42,8 +42,54 @@ function HomeTab() {
   const navigate = useNavigate()
   const [showSearch, setShowSearch] = useState(false)
   const [searchQ, setSearchQ] = useState("")
+
+  const [isApproved, setIsApproved] = useState(() => {
+    const user = JSON.parse(localStorage.getItem("katsera_user") || "{}")
+    // If not explicitly set to false, default to true for existing artist accounts
+    return user.isApproved !== false
+  })
+
+  const handleToggleApprove = () => {
+    const user = JSON.parse(localStorage.getItem("katsera_user") || "{}")
+    const updated = { ...user, isApproved: !isApproved, role: "artist" }
+    localStorage.setItem("katsera_user", JSON.stringify(updated))
+    setIsApproved(!isApproved)
+  }
+
   return (
-    <div className="flex-1 overflow-y-auto pb-24 px-4 pt-4">
+    <div className="flex-1 overflow-y-auto pb-24 px-4 pt-4 font-[Nunito]">
+      {/* Approval Status Banner */}
+      {!isApproved ? (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 mb-4 shadow-sm">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-amber-900 font-extrabold text-sm flex items-center gap-1.5">
+                <span>⏳</span> Akun Artis: Menunggu Approval Admin
+              </p>
+              <p className="text-amber-700 text-xs mt-1">
+                KTP & NPWP Anda sedang dalam peninjauan. Fitur penjualan & penarikan akan aktif penuh setelah disetujui.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleApprove}
+              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold text-[11px] px-3 py-1.5 rounded-xl shadow-sm flex-shrink-0 transition-all"
+            >
+              ⚡ Setujui Sekarang
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2.5 mb-4 flex items-center justify-between shadow-xs">
+          <p className="text-emerald-800 font-extrabold text-xs flex items-center gap-1.5">
+            <span>✓</span> Akun Artis Terverifikasi Resmi • Semua Fitur Aktif
+          </p>
+          <span className="text-[10px] text-emerald-600 font-bold bg-white px-2 py-0.5 rounded-full border border-emerald-200">
+            Official Creator
+          </span>
+        </div>
+      )}
+
       {/* Profile card */}
       <div className="bg-[#3D5898] rounded-2xl p-5 mb-5 flex items-center gap-4 relative overflow-hidden">
         <div
@@ -71,6 +117,7 @@ function HomeTab() {
           Verified
         </div>
       </div>
+
 
       {/* Quick actions */}
       <div className="grid grid-cols-4 gap-2 mb-6">
