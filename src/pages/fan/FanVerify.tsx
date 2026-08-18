@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation, Link } from "react-router-dom"
 
 export default function FanVerify() {
   const navigate = useNavigate()
@@ -104,7 +104,6 @@ export default function FanVerify() {
         setVerified(true)
         setTimeout(() => navigate("/fan/pick-artists"), 1000)
       } else {
-        // STRICT FAILURE: Wrong OTP
         setError(data.message || "Kode OTP salah! Verifikasi gagal, silakan cek email Anda.")
         setOtp(["", "", "", "", "", ""])
         inputs.current[0]?.focus()
@@ -120,7 +119,6 @@ export default function FanVerify() {
         setVerified(true)
         setTimeout(() => navigate("/fan/pick-artists"), 1000)
       } else {
-        // STRICT FAILURE: Wrong OTP
         setError("Kode OTP salah! Verifikasi gagal, silakan cek email Anda.")
         setOtp(["", "", "", "", "", ""])
         inputs.current[0]?.focus()
@@ -130,10 +128,9 @@ export default function FanVerify() {
     }
   }
 
-
   if (verified) return (
     <div className="min-h-screen bg-[#E8E8E8] flex flex-col items-center justify-center max-w-md mx-auto font-[Nunito] gap-4 px-8">
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center shadow-lg animate-bounce">
         <svg width="36" height="36" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
       </div>
       <p className="text-[#1E2D5A] font-extrabold text-2xl">Email Verified!</p>
@@ -142,25 +139,77 @@ export default function FanVerify() {
   )
 
   return (
-    <div className="min-h-screen bg-[#E8E8E8] flex flex-col max-w-md mx-auto font-[Nunito]">
+    <div className="min-h-screen bg-[#E8E8E8] flex flex-col max-w-md mx-auto relative overflow-hidden font-[Nunito]">
+      {/* Decorative arcs top */}
+      <div className="absolute top-0 left-0 right-0 flex-shrink-0 pointer-events-none" style={{ height: 180 }}>
+        <div
+          className="absolute"
+          style={{
+            width: 200,
+            height: 200,
+            background: "#3D5898",
+            borderRadius: "50%",
+            top: -100,
+            left: -60,
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            width: 150,
+            height: 150,
+            background: "#E8E8E8",
+            borderRadius: "50%",
+            top: -80,
+            left: -80,
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            width: 160,
+            height: 160,
+            background: "#3D5898",
+            borderRadius: "50%",
+            top: -80,
+            right: -40,
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            width: 130,
+            height: 130,
+            background: "#E8E8E8",
+            borderRadius: "50%",
+            top: -70,
+            right: -70,
+          }}
+        />
+      </div>
+
       {/* Real OTP Toast Notification */}
       {toastMsg && (
-        <div className="bg-[#3D5898] text-white text-xs font-bold px-4 py-2.5 text-center shadow-md animate-pulse">
+        <div className="relative z-20 bg-[#3D5898] text-white text-xs font-bold px-4 py-2.5 text-center shadow-md animate-pulse">
           {toastMsg}
         </div>
       )}
 
-      <div className="flex-1 flex flex-col px-6 sm:px-10 pt-12 sm:pt-16 pb-10">
-        <h1 className="text-[#1E2D5A] text-3xl sm:text-4xl font-extrabold mb-3">
+      {/* Card */}
+      <div
+        className="relative z-10 flex-1 flex flex-col mt-20 bg-white mx-2 rounded-t-3xl rounded-b-none px-7 pt-8 pb-10 shadow-xl"
+        style={{ minHeight: "calc(100vh - 5rem)" }}
+      >
+        <h1 className="text-[#1E2D5A] text-3xl font-extrabold text-center mb-2">
           Verify Your Email
         </h1>
-        <p className="text-[#7A8BB5] text-sm sm:text-base font-medium mb-10 leading-relaxed">
+        <p className="text-[#7A8BB5] text-sm text-center font-medium mb-8 leading-relaxed">
           Enter the 6-digit code sent to:<br />
           <span className="text-[#3D5898] font-bold text-base">{targetEmail}</span>
         </p>
 
-        {/* OTP boxes — responsive, gap scales with screen */}
-        <div className="flex justify-between gap-2 sm:gap-3 mb-3 w-full" onPaste={handlePaste}>
+        {/* OTP boxes — 6 digits */}
+        <div className="flex justify-between gap-2 mb-3 w-full" onPaste={handlePaste}>
           {otp.map((digit, i) => (
             <input
               key={i}
@@ -174,27 +223,27 @@ export default function FanVerify() {
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
               className={`
-                flex-1 min-w-0 aspect-square max-h-14 sm:max-h-16
-                text-center text-xl sm:text-2xl font-extrabold
-                bg-white rounded-xl sm:rounded-2xl
+                flex-1 min-w-0 aspect-square max-h-14
+                text-center text-2xl font-extrabold
+                bg-white rounded-2xl
                 border-2 transition-all duration-150
                 focus:outline-none
                 ${digit ? "border-[#3D5898] bg-[#3D5898]/5" : "border-[#E0E5F2]"}
                 ${error ? "border-red-400 bg-red-50" : "focus:border-[#3D5898]"}
-                text-[#1E2D5A]
+                text-[#1E2D5A] shadow-sm
               `}
             />
           ))}
         </div>
 
-        {error && <p className="text-red-500 text-xs font-semibold text-center mb-2">{error}</p>}
+        {error && <p className="text-red-500 text-xs font-bold text-center mb-2">{error}</p>}
 
-        {/* Paste hint */}
-        <p className="text-[#9BAACE] text-xs text-center mb-8">You can also paste your 6-digit code</p>
+        <p className="text-[#9BAACE] text-xs text-center mb-6">You can also paste your 6-digit code</p>
 
-        {/* Resend */}
+        {/* Resend button */}
         <button
-          className="text-center text-sm font-semibold mb-6 disabled:opacity-40 transition-colors"
+          type="button"
+          className="text-center text-sm font-bold mb-6 disabled:opacity-40 transition-colors"
           disabled={countdown > 0 || verifying}
           onClick={() => {
             setCountdown(28)
@@ -208,22 +257,21 @@ export default function FanVerify() {
           {countdown > 0 ? `Resend Code in ${countdown}s` : "Resend Code"}
         </button>
 
-        <div className="h-px bg-[#C8D0E8] mb-6" />
-
         <button
           onClick={handleVerify}
           disabled={verifying || !isComplete}
-          className="w-full py-4 rounded-full bg-[#3D5898] text-white font-extrabold text-base sm:text-lg active:scale-95 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-full bg-[#3D5898] text-white font-extrabold text-lg active:scale-95 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {verifying ? <><div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying...</> : "Verify"}
+          {verifying ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : "Verify"}
         </button>
 
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-2 mt-6">
-          {otp.map((d, i) => (
-            <div key={i} className={`w-2 h-2 rounded-full transition-all ${d ? "bg-[#3D5898] scale-110" : "bg-[#E0E5F2]"}`} />
-          ))}
-        </div>
+        {/* Change email link */}
+        <p className="text-center text-sm text-[#4A5A80] mt-auto pt-8 font-medium">
+          Wrong email address?{" "}
+          <Link to="/fan/signup" className="text-[#3D5898] font-bold underline">
+            Change email
+          </Link>
+        </p>
       </div>
     </div>
   )
