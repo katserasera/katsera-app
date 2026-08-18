@@ -176,9 +176,8 @@ exports.sendOTP = async (req, res) => {
             try {
                 const { Resend } = require("resend");
                 const resend = new Resend(process.env.RESEND_API_KEY.trim());
-                const fromAddress = process.env.RESEND_FROM || "Katsera <onboarding@resend.dev>";
-
-                const { data, error } = await resend.emails.send({
+                let fromAddress = process.env.RESEND_FROM || "Katsera <noreply@katserasera.com>";
+                let { data, error } = await resend.emails.send({
                     from: fromAddress,
                     to: [email],
                     subject: `${otpCode} adalah Kode Verifikasi Katsera Anda`,
@@ -199,7 +198,29 @@ exports.sendOTP = async (req, res) => {
                 });
 
                 if (error) {
-                    console.error("[RESEND API ERROR]:", error);
+                    console.log("[RESEND RETRY with onboarding@resend.dev]:", error.message);
+                    // Fallback to Resend default onboarding sender if domain not verified
+                    const retryResult = await resend.emails.send({
+                        from: "Katsera <onboarding@resend.dev>",
+                        to: [email],
+                        subject: `${otpCode} adalah Kode Verifikasi Katsera Anda`,
+                        html: `
+                            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 28px; max-width: 480px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e5f2; border-radius: 16px;">
+                                <h1 style="color: #3D5898; font-size: 26px; font-weight: 800; margin: 0;">Katsera</h1>
+                                <h2 style="color: #1E2D5A; font-size: 18px; font-weight: 700; margin-bottom: 8px;">Verifikasi Akun Anda</h2>
+                                <p style="color: #4A5A80; font-size: 14px;">Berikut adalah 6 digit kode OTP verifikasi untuk akun Katsera Anda:</p>
+                                <div style="background-color: #3D5898; color: #ffffff; font-size: 32px; font-weight: 800; text-align: center; padding: 16px; border-radius: 12px; letter-spacing: 8px; margin: 20px 0;">
+                                    ${otpCode}
+                                </div>
+                                <p style="color: #7A8BB5; font-size: 12px;">Kode ini berlaku selama 10 menit.</p>
+                            </div>
+                        `
+                    });
+                    if (retryResult.error) {
+                        console.error("[RESEND RETRY ERROR]:", retryResult.error);
+                    } else {
+                        console.log(`[RESEND API SUCCESS] OTP email sent to ${email}, ID: ${retryResult.data?.id}`);
+                    }
                 } else {
                     console.log(`[RESEND API SUCCESS] OTP email sent to ${email}, ID: ${data?.id}`);
                 }
